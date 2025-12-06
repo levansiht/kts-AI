@@ -69,7 +69,12 @@ export const EditHistoryPanel: React.FC<EditHistoryPanelProps> = ({
                 </div>
                 <div className="w-1/2 relative aspect-square">
                   <img
-                    src={item.resultImage}
+                    src={
+                      typeof item.resultImage === "string"
+                        ? item.resultImage
+                        : item.resultImage.dataUrl ||
+                          `data:${item.resultImage.mimeType};base64,${item.resultImage.base64}`
+                    }
                     alt="Result"
                     className="w-full h-full object-cover rounded"
                   />

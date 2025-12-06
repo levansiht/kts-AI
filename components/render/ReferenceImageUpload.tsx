@@ -23,9 +23,15 @@ export default function ReferenceImageUpload({
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const base64 = (e.target?.result as string).split(",")[1];
+        const dataUrl = e.target?.result as string;
+        const base64 = dataUrl.split(",")[1];
         if (base64) {
-          onUpload({ base64, mimeType: file.type });
+          onUpload({
+            base64,
+            mimeType: file.type,
+            dataUrl,
+            name: file.name,
+          });
         }
       };
       reader.readAsDataURL(file);

@@ -64,6 +64,9 @@ export default function MainApp({
     null
   );
 
+  // Theme selector state
+  const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
+
   // Handle source image upload
   const handleSourceImageUpload = (
     tab: "exterior" | "interior" | "floorplan",
@@ -303,30 +306,156 @@ export default function MainApp({
           </a>
         </div>
 
-        {/* Theme Selector */}
-        <div className="absolute top-0 right-0 z-50">
-          <select
-            value={theme}
-            onChange={(e) =>
-              setTheme(
-                e.target.value as
-                  | "dark"
-                  | "light"
-                  | "orange"
-                  | "green"
-                  | "architect"
-                  | "xmas"
-              )
-            }
-            className="px-3 py-1.5 text-xs bg-[var(--bg-surface-1)] border border-[var(--border-1)] rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--border-accent)]"
-          >
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="orange">Orange</option>
-            <option value="green">Green</option>
-            <option value="architect">Architect</option>
-            <option value="xmas">Xmas</option>
-          </select>
+        {/* Expanding Theme Selector */}
+        <div
+          className="absolute top-0 right-0"
+          onMouseLeave={() => setIsThemeSelectorOpen(false)}
+        >
+          <div className="flex items-center justify-end bg-[var(--bg-surface-1)] border border-[var(--border-1)] rounded-full shadow-lg">
+            {/* Expanding options container */}
+            <div
+              className={`flex items-center transition-all duration-300 ease-in-out overflow-hidden ${
+                isThemeSelectorOpen ? "max-w-2xl" : "max-w-0"
+              }`}
+            >
+              <div className="flex items-center gap-1 pl-3 pr-2 whitespace-nowrap">
+                {/* Dark */}
+                <button
+                  onClick={() => setTheme("dark")}
+                  className="group flex items-center gap-1.5 p-2 rounded-full hover:bg-[var(--bg-surface-2)] text-left text-[var(--text-primary)] transition-colors"
+                >
+                  <Icon
+                    name="moon"
+                    className="w-5 h-5 text-indigo-400 transition-transform duration-200 ease-in-out group-hover:scale-125"
+                  />
+                  <span className="font-semibold text-sm text-[var(--text-secondary)] transition-colors duration-200 group-hover:text-[var(--text-accent)]">
+                    Dark
+                  </span>
+                </button>
+                {/* Light */}
+                <button
+                  onClick={() => setTheme("light")}
+                  className="group flex items-center gap-1.5 p-2 rounded-full hover:bg-[var(--bg-surface-2)] text-left text-[var(--text-primary)] transition-colors"
+                >
+                  <Icon
+                    name="sun"
+                    className="w-5 h-5 text-amber-500 transition-transform duration-200 ease-in-out group-hover:scale-125"
+                  />
+                  <span className="font-semibold text-sm text-[var(--text-secondary)] transition-colors duration-200 group-hover:text-[var(--text-accent)]">
+                    Light
+                  </span>
+                </button>
+                {/* Orange */}
+                <button
+                  onClick={() => setTheme("orange")}
+                  className="group flex items-center gap-1.5 p-2 rounded-full hover:bg-[var(--bg-surface-2)] text-left text-[var(--text-primary)] transition-colors"
+                >
+                  <Icon
+                    name="sparkles"
+                    className="w-5 h-5 text-orange-400 transition-transform duration-200 ease-in-out group-hover:scale-125"
+                  />
+                  <span className="font-semibold text-sm text-[var(--text-secondary)] transition-colors duration-200 group-hover:text-[var(--text-accent)]">
+                    Orange
+                  </span>
+                </button>
+                {/* Green */}
+                <button
+                  onClick={() => setTheme("green")}
+                  className="group flex items-center gap-1.5 p-2 rounded-full hover:bg-[var(--bg-surface-2)] text-left text-[var(--text-primary)] transition-colors"
+                >
+                  <Icon
+                    name="beaker"
+                    className="w-5 h-5 text-lime-400 transition-transform duration-200 ease-in-out group-hover:scale-125"
+                  />
+                  <span className="font-semibold text-sm text-[var(--text-secondary)] transition-colors duration-200 group-hover:text-[var(--text-accent)]">
+                    Green
+                  </span>
+                </button>
+                {/* Architect */}
+                <button
+                  onClick={() => setTheme("architect")}
+                  className="group flex items-center gap-1.5 p-2 rounded-full hover:bg-[var(--bg-surface-2)] text-left text-[var(--text-primary)] transition-colors"
+                >
+                  <Icon
+                    name="building-office"
+                    className="w-5 h-5 text-cyan-400 transition-transform duration-200 ease-in-out group-hover:scale-125"
+                  />
+                  <span className="font-semibold text-sm text-[var(--text-secondary)] transition-colors duration-200 group-hover:text-[var(--text-accent)]">
+                    Architect
+                  </span>
+                </button>
+                {/* X-MAS */}
+                <button
+                  onClick={() => setTheme("xmas")}
+                  className="group flex items-center gap-1.5 p-2 rounded-full hover:bg-[var(--bg-surface-2)] text-left text-[var(--text-primary)] transition-colors"
+                >
+                  <Icon
+                    name="gift"
+                    className="w-5 h-5 text-rose-500 transition-transform duration-200 ease-in-out group-hover:scale-125"
+                  />
+                  <span className="font-semibold text-sm text-[var(--text-secondary)] transition-colors duration-200 group-hover:text-[var(--text-accent)]">
+                    X-mas
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Trigger Button */}
+            <button
+              className="p-2 rounded-full hover:bg-[var(--bg-surface-2)] transition-colors flex-shrink-0 z-10"
+              aria-label="Change theme"
+              onMouseEnter={() => setIsThemeSelectorOpen(true)}
+            >
+              {theme === "dark" && (
+                <Icon name="moon" className="w-6 h-6 text-indigo-400" />
+              )}
+              {theme === "light" && (
+                <Icon name="sun" className="w-6 h-6 text-amber-500" />
+              )}
+              {theme === "orange" && (
+                <Icon name="sparkles" className="w-6 h-6 text-orange-400" />
+              )}
+              {theme === "green" && (
+                <Icon name="beaker" className="w-6 h-6 text-lime-400" />
+              )}
+              {theme === "architect" && (
+                <Icon
+                  name="building-office"
+                  className="w-6 h-6 text-cyan-400"
+                />
+              )}
+              {theme === "xmas" && (
+                <Icon name="gift" className="w-6 h-6 text-rose-500" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Model Tier Selector - Below Theme Selector */}
+        <div className="absolute top-14 right-0 z-40">
+          <div className="bg-[var(--bg-surface-1)] border border-[var(--border-1)] rounded-full p-1 flex shadow-xl">
+            <button
+              onClick={() => modelSelection.setModelTier("free")}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                modelSelection.modelTier === "free"
+                  ? "bg-[var(--bg-interactive)] text-white shadow-md"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              Nano Free
+            </button>
+            <button
+              onClick={() => modelSelection.setModelTier("pro")}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1 ${
+                modelSelection.modelTier === "pro"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md"
+                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
+            >
+              <Icon name="sparkles" className="w-3 h-3" />
+              Nano Pro
+            </button>
+          </div>
         </div>
       </header>
 

@@ -9,24 +9,41 @@ import { ImageCompareSlider } from "./ImageCompareSlider";
 const dataUrlToSourceImage = (dataUrl: string): SourceImage | null => {
   const match = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
   if (match && match[1] && match[2]) {
-    return { 
-      mimeType: match[1], 
+    return {
+      mimeType: match[1],
       base64: match[2],
       dataUrl: dataUrl,
-      name: `image_${Date.now()}.${match[1].split('/')[1]}`,
+      name: `image_${Date.now()}.${match[1].split("/")[1]}`,
     };
   }
   return null;
 };
 
-const ImageViewerModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({ imageUrl, onClose }) => (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-    <div className="bg-[var(--bg-surface-4)]/80 backdrop-blur-lg border border-[var(--border-1)] rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col relative" onClick={(e) => e.stopPropagation()}>
-      <button onClick={onClose} className="absolute -top-4 -right-4 bg-[var(--bg-interactive)] text-white rounded-full p-2 hover:bg-[var(--bg-interactive-hover)] transition-transform duration-200 hover:scale-110 z-10" aria-label="Close">
+const ImageViewerModal: React.FC<{ imageUrl: string; onClose: () => void }> = ({
+  imageUrl,
+  onClose,
+}) => (
+  <div
+    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    onClick={onClose}
+  >
+    <div
+      className="bg-[var(--bg-surface-4)]/80 backdrop-blur-lg border border-[var(--border-1)] rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col relative"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        onClick={onClose}
+        className="absolute -top-4 -right-4 bg-[var(--bg-interactive)] text-white rounded-full p-2 hover:bg-[var(--bg-interactive-hover)] transition-transform duration-200 hover:scale-110 z-10"
+        aria-label="Close"
+      >
         <Icon name="x-mark" className="w-6 h-6" />
       </button>
       <div className="p-2 flex-grow overflow-auto flex items-center justify-center">
-        <img src={imageUrl} alt="Fullscreen view" className="max-w-full max-h-full object-contain rounded-md" />
+        <img
+          src={imageUrl}
+          alt="Fullscreen view"
+          className="max-w-full max-h-full object-contain rounded-md"
+        />
       </div>
     </div>
   </div>
@@ -130,30 +147,66 @@ const ZoomEditorModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-[var(--bg-surface-4)]/90 border border-[var(--border-1)] rounded-xl shadow-2xl w-full h-full flex flex-col relative" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[var(--bg-surface-4)]/90 border border-[var(--border-1)] rounded-xl shadow-2xl w-full h-full flex flex-col relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex-shrink-0 p-3 bg-[var(--bg-surface-3)]/50 border-b border-[var(--border-1)] flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
               <Icon name="brush" className="w-5 h-5" /> Cỡ Bút:
-              <input type="range" min="5" max="150" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} className="w-32 accent-indigo-500" />
+              <input
+                type="range"
+                min="5"
+                max="150"
+                value={brushSize}
+                onChange={(e) => setBrushSize(Number(e.target.value))}
+                className="w-32 accent-indigo-500"
+              />
               <span>{brushSize}px</span>
             </label>
-            <button onClick={handleUndo} disabled={drawingHistory.length === 0} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-[var(--text-interactive)] bg-[var(--bg-surface-3)] hover:bg-[var(--bg-surface-2)] rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+            <button
+              onClick={handleUndo}
+              disabled={drawingHistory.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-[var(--text-interactive)] bg-[var(--bg-surface-3)] hover:bg-[var(--bg-surface-2)] rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Icon name="arrow-uturn-left" className="w-4 h-4" /> Hoàn Tác
             </button>
           </div>
-          <button onClick={handleSave} className="px-4 py-1.5 text-sm font-bold text-[var(--text-interactive)] bg-[var(--bg-interactive)] hover:bg-[var(--bg-interactive-hover)] rounded-md transition">
+          <button
+            onClick={handleSave}
+            className="px-4 py-1.5 text-sm font-bold text-[var(--text-interactive)] bg-[var(--bg-interactive)] hover:bg-[var(--bg-interactive-hover)] rounded-md transition"
+          >
             Lưu & Đóng
           </button>
         </div>
-        <div ref={containerRef} className="flex-grow w-full h-full p-4 overflow-auto flex items-center justify-center">
+        <div
+          ref={containerRef}
+          className="flex-grow w-full h-full p-4 overflow-auto flex items-center justify-center"
+        >
           <div className="relative w-max h-max">
-            <canvas ref={imageCanvasRef} className="max-w-full max-h-full object-contain block" />
-            <canvas ref={drawingCanvasRef} className="absolute inset-0 w-full h-full object-contain cursor-crosshair" onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={stopDrawing} onMouseLeave={stopDrawing} />
+            <canvas
+              ref={imageCanvasRef}
+              className="max-w-full max-h-full object-contain block"
+            />
+            <canvas
+              ref={drawingCanvasRef}
+              className="absolute inset-0 w-full h-full object-contain cursor-crosshair"
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+            />
           </div>
         </div>
-        <button onClick={onClose} className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/80 transition">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/80 transition"
+        >
           <Icon name="x-mark" className="w-5 h-5" />
         </button>
       </div>
@@ -164,7 +217,12 @@ const ZoomEditorModal: React.FC<{
 interface ImageEditorProps {
   initialImage: SourceImage | null;
   onClearInitialImage: () => void;
-  onEditComplete: (details: { sourceImage: SourceImage; maskImage: SourceImage; prompt: string; resultImage: string }) => void;
+  onEditComplete: (details: {
+    sourceImage: SourceImage;
+    maskImage: SourceImage;
+    prompt: string;
+    resultImage: string;
+  }) => void;
   historyItemToRestore: EditHistoryItem | null;
   onHistoryRestored: () => void;
   onCreateVideoRequest: (imageUrl: string) => void;
@@ -177,7 +235,14 @@ interface Rect {
   h: number;
 }
 
-export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearInitialImage, onEditComplete, historyItemToRestore, onHistoryRestored, onCreateVideoRequest }) => {
+export const ImageEditor: React.FC<ImageEditorProps> = ({
+  initialImage,
+  onClearInitialImage,
+  onEditComplete,
+  historyItemToRestore,
+  onHistoryRestored,
+  onCreateVideoRequest,
+}) => {
   const [image, setImage] = useState<SourceImage | null>(null);
   const [prompt, setPrompt] = useState("");
   const [brushSize, setBrushSize] = useState(40);
@@ -192,7 +257,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
   const [zoomLevel, setZoomLevel] = useState(1);
   const [editMode, setEditMode] = useState<"brush" | "rectangle">("brush");
   const [selectionRect, setSelectionRect] = useState<Rect | null>(null);
-  const [dragState, setDragState] = useState<{ mode: "none" | "selecting" | "moving" | "resizing"; startPos: { x: number; y: number }; initialRect: Rect | null; activeHandle: string | null }>({
+  const [dragState, setDragState] = useState<{
+    mode: "none" | "selecting" | "moving" | "resizing";
+    startPos: { x: number; y: number };
+    initialRect: Rect | null;
+    activeHandle: string | null;
+  }>({
     mode: "none",
     startPos: { x: 0, y: 0 },
     initialRect: null,
@@ -202,7 +272,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
   const sourceDrawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const sourceContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const sourceImageUrlForSlider = image ? `data:${image.mimeType};base64,${image.base64}` : null;
+  const sourceImageUrlForSlider = image
+    ? `data:${image.mimeType};base64,${image.base64}`
+    : null;
 
   const clearMask = useCallback(() => {
     const canvas = sourceDrawingCanvasRef.current;
@@ -221,8 +293,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
         const dataUrl = e.target?.result as string;
         const base64 = dataUrl.split(",")[1];
         if (base64) {
-          setImage({ 
-            base64, 
+          setImage({
+            base64,
             mimeType: file.type,
             dataUrl: dataUrl,
             name: file.name,
@@ -262,7 +334,13 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
   };
 
   const drawImageOnCanvas = useCallback(() => {
-    if (!image || !sourceImageCanvasRef.current || !sourceDrawingCanvasRef.current || !sourceContainerRef.current) return;
+    if (
+      !image ||
+      !sourceImageCanvasRef.current ||
+      !sourceDrawingCanvasRef.current ||
+      !sourceContainerRef.current
+    )
+      return;
     const imageEl = new Image();
     imageEl.src = `data:${image.mimeType};base64,${image.base64}`;
     imageEl.onload = () => {
@@ -296,13 +374,26 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
     if (historyItemToRestore) {
       setImage(historyItemToRestore.sourceImage);
       setPrompt(historyItemToRestore.prompt);
-      setResultImage(historyItemToRestore.resultImage);
+      // Handle both string and SourceImage types for resultImage
+      if (typeof historyItemToRestore.resultImage === "string") {
+        setResultImage(historyItemToRestore.resultImage);
+      } else if (
+        historyItemToRestore.resultImage &&
+        "dataUrl" in historyItemToRestore.resultImage
+      ) {
+        setResultImage(historyItemToRestore.resultImage.dataUrl || null);
+      } else {
+        setResultImage(null);
+      }
       clearMask();
       onHistoryRestored();
     }
   }, [historyItemToRestore, onHistoryRestored, clearMask]);
 
-  const getMousePos = (canvas: HTMLCanvasElement, evt: MouseEvent | React.MouseEvent) => {
+  const getMousePos = (
+    canvas: HTMLCanvasElement,
+    evt: MouseEvent | React.MouseEvent
+  ) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -313,16 +404,45 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
   };
 
   const getHandles = (rect: Rect) => {
-    const handleSize = 12 * (sourceDrawingCanvasRef.current ? sourceDrawingCanvasRef.current.width / sourceDrawingCanvasRef.current.getBoundingClientRect().width : 1);
+    const handleSize =
+      12 *
+      (sourceDrawingCanvasRef.current
+        ? sourceDrawingCanvasRef.current.width /
+          sourceDrawingCanvasRef.current.getBoundingClientRect().width
+        : 1);
     const x = rect.w > 0 ? rect.x : rect.x + rect.w;
     const y = rect.h > 0 ? rect.y : rect.y + rect.h;
     const w = Math.abs(rect.w);
     const h = Math.abs(rect.h);
     return {
-      tl: { x: x - handleSize / 2, y: y - handleSize / 2, w: handleSize, h: handleSize, cursor: "nw-resize" },
-      tr: { x: x + w - handleSize / 2, y: y - handleSize / 2, w: handleSize, h: handleSize, cursor: "ne-resize" },
-      bl: { x: x - handleSize / 2, y: y + h - handleSize / 2, w: handleSize, h: handleSize, cursor: "sw-resize" },
-      br: { x: x + w - handleSize / 2, y: y + h - handleSize / 2, w: handleSize, h: handleSize, cursor: "se-resize" },
+      tl: {
+        x: x - handleSize / 2,
+        y: y - handleSize / 2,
+        w: handleSize,
+        h: handleSize,
+        cursor: "nw-resize",
+      },
+      tr: {
+        x: x + w - handleSize / 2,
+        y: y - handleSize / 2,
+        w: handleSize,
+        h: handleSize,
+        cursor: "ne-resize",
+      },
+      bl: {
+        x: x - handleSize / 2,
+        y: y + h - handleSize / 2,
+        w: handleSize,
+        h: handleSize,
+        cursor: "sw-resize",
+      },
+      br: {
+        x: x + w - handleSize / 2,
+        y: y + h - handleSize / 2,
+        w: handleSize,
+        h: handleSize,
+        cursor: "se-resize",
+      },
     };
   };
 
@@ -370,24 +490,57 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
       } else {
         if (selectionRect) {
           const handles = getHandles(selectionRect);
-          const handleKeys = Object.keys(handles) as Array<keyof typeof handles>;
+          const handleKeys = Object.keys(handles) as Array<
+            keyof typeof handles
+          >;
           for (const key of handleKeys) {
             const h = handles[key];
-            if (pos.x >= h.x && pos.x <= h.x + h.w && pos.y >= h.y && pos.y <= h.y + h.h) {
-              setDragState({ mode: "resizing", startPos: pos, initialRect: selectionRect, activeHandle: key });
+            if (
+              pos.x >= h.x &&
+              pos.x <= h.x + h.w &&
+              pos.y >= h.y &&
+              pos.y <= h.y + h.h
+            ) {
+              setDragState({
+                mode: "resizing",
+                startPos: pos,
+                initialRect: selectionRect,
+                activeHandle: key,
+              });
               return;
             }
           }
-          const normX = selectionRect.w > 0 ? selectionRect.x : selectionRect.x + selectionRect.w;
-          const normY = selectionRect.h > 0 ? selectionRect.y : selectionRect.y + selectionRect.h;
+          const normX =
+            selectionRect.w > 0
+              ? selectionRect.x
+              : selectionRect.x + selectionRect.w;
+          const normY =
+            selectionRect.h > 0
+              ? selectionRect.y
+              : selectionRect.y + selectionRect.h;
           const normW = Math.abs(selectionRect.w);
           const normH = Math.abs(selectionRect.h);
-          if (pos.x >= normX && pos.x <= normX + normW && pos.y >= normY && pos.y <= normY + normH) {
-            setDragState({ mode: "moving", startPos: pos, initialRect: selectionRect, activeHandle: null });
+          if (
+            pos.x >= normX &&
+            pos.x <= normX + normW &&
+            pos.y >= normY &&
+            pos.y <= normY + normH
+          ) {
+            setDragState({
+              mode: "moving",
+              startPos: pos,
+              initialRect: selectionRect,
+              activeHandle: null,
+            });
             return;
           }
         }
-        setDragState({ mode: "selecting", startPos: pos, initialRect: null, activeHandle: null });
+        setDragState({
+          mode: "selecting",
+          startPos: pos,
+          initialRect: null,
+          activeHandle: null,
+        });
         setSelectionRect({ x: pos.x, y: pos.y, w: 0, h: 0 });
       }
     },
@@ -403,20 +556,38 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
         let cursor = "crosshair";
         if (selectionRect) {
           const handles = getHandles(selectionRect);
-          const handleKeys = Object.keys(handles) as Array<keyof typeof handles>;
+          const handleKeys = Object.keys(handles) as Array<
+            keyof typeof handles
+          >;
           for (const key of handleKeys) {
             const h = handles[key];
-            if (pos.x >= h.x && pos.x <= h.x + h.w && pos.y >= h.y && pos.y <= h.y + h.h) {
+            if (
+              pos.x >= h.x &&
+              pos.x <= h.x + h.w &&
+              pos.y >= h.y &&
+              pos.y <= h.y + h.h
+            ) {
               cursor = h.cursor;
               break;
             }
           }
           if (cursor === "crosshair") {
-            const normX = selectionRect.w > 0 ? selectionRect.x : selectionRect.x + selectionRect.w;
-            const normY = selectionRect.h > 0 ? selectionRect.y : selectionRect.y + selectionRect.h;
+            const normX =
+              selectionRect.w > 0
+                ? selectionRect.x
+                : selectionRect.x + selectionRect.w;
+            const normY =
+              selectionRect.h > 0
+                ? selectionRect.y
+                : selectionRect.y + selectionRect.h;
             const normW = Math.abs(selectionRect.w);
             const normH = Math.abs(selectionRect.h);
-            if (pos.x >= normX && pos.x <= normX + normW && pos.y >= normY && pos.y <= normY + normH) {
+            if (
+              pos.x >= normX &&
+              pos.x <= normX + normW &&
+              pos.y >= normY &&
+              pos.y <= normY + normH
+            ) {
               cursor = "move";
             }
           }
@@ -428,7 +599,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
       if (editMode === "brush" && isDrawing) {
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-        const nativeBrushSize = brushSize * (canvas.width / canvas.getBoundingClientRect().width);
+        const nativeBrushSize =
+          brushSize * (canvas.width / canvas.getBoundingClientRect().width);
         ctx.lineTo(pos.x, pos.y);
         ctx.strokeStyle = `rgba(236, 72, 153, 0.7)`;
         ctx.lineWidth = nativeBrushSize;
@@ -451,7 +623,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
             x: dragState.initialRect.x + dx,
             y: dragState.initialRect.y + dy,
           });
-        } else if (dragState.mode === "resizing" && dragState.initialRect && dragState.activeHandle) {
+        } else if (
+          dragState.mode === "resizing" &&
+          dragState.initialRect &&
+          dragState.activeHandle
+        ) {
           const ir = dragState.initialRect;
           let newRect = { ...ir };
           const nx = ir.w > 0 ? ir.x : ir.x + ir.w;
@@ -490,10 +666,21 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
       }
       setIsDrawing(false);
     } else if (editMode === "rectangle") {
-      setDragState({ mode: "none", startPos: { x: 0, y: 0 }, initialRect: null, activeHandle: null });
+      setDragState({
+        mode: "none",
+        startPos: { x: 0, y: 0 },
+        initialRect: null,
+        activeHandle: null,
+      });
       if (selectionRect) {
-        const normX = selectionRect.w > 0 ? selectionRect.x : selectionRect.x + selectionRect.w;
-        const normY = selectionRect.h > 0 ? selectionRect.y : selectionRect.y + selectionRect.h;
+        const normX =
+          selectionRect.w > 0
+            ? selectionRect.x
+            : selectionRect.x + selectionRect.w;
+        const normY =
+          selectionRect.h > 0
+            ? selectionRect.y
+            : selectionRect.y + selectionRect.h;
         const normW = Math.abs(selectionRect.w);
         const normH = Math.abs(selectionRect.h);
         if (normW < 10 || normH < 10) {
@@ -549,7 +736,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
     maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
     const dataUrl = maskCanvas.toDataURL("image/png");
     const base64 = dataUrl.split(",")[1];
-    return { base64, mimeType: "image/png" };
+    return {
+      base64,
+      mimeType: "image/png",
+      dataUrl,
+      name: `mask_${Date.now()}.png`,
+    };
   };
 
   const handleGenerate = async () => {
@@ -582,8 +774,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
         const cropCtx = cropCanvas.getContext("2d");
         if (!cropCtx) throw new Error("Could not create crop context");
         cropCtx.drawImage(canvas, rx, ry, rw, rh, 0, 0, rw, rh);
-        const cropBase64 = cropCanvas.toDataURL(image.mimeType).split(",")[1];
-        const cropSource: SourceImage = { base64: cropBase64, mimeType: image.mimeType };
+        const cropDataUrl = cropCanvas.toDataURL(image.mimeType);
+        const cropBase64 = cropDataUrl.split(",")[1];
+        const cropSource: SourceImage = {
+          base64: cropBase64,
+          mimeType: image.mimeType,
+          dataUrl: cropDataUrl,
+          name: `crop_${Date.now()}.png`,
+        };
         const maskCanvas = document.createElement("canvas");
         maskCanvas.width = rw;
         maskCanvas.height = rh;
@@ -591,9 +789,19 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
         if (!maskCtx) throw new Error("Could not create mask context");
         maskCtx.fillStyle = "white";
         maskCtx.fillRect(0, 0, rw, rh);
-        const maskBase64 = maskCanvas.toDataURL("image/png").split(",")[1];
-        const maskSource: SourceImage = { base64: maskBase64, mimeType: "image/png" };
-        const cropResultBase64 = await editImage(cropSource, maskSource, prompt);
+        const maskDataUrl = maskCanvas.toDataURL("image/png");
+        const maskBase64 = maskDataUrl.split(",")[1];
+        const maskSource: SourceImage = {
+          base64: maskBase64,
+          mimeType: "image/png",
+          dataUrl: maskDataUrl,
+          name: `mask_${Date.now()}.png`,
+        };
+        const cropResultBase64 = await editImage(
+          cropSource,
+          maskSource,
+          prompt
+        );
         if (cropResultBase64) {
           const stitchCanvas = document.createElement("canvas");
           stitchCanvas.width = canvas.width;
@@ -616,10 +824,16 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
             hmCtx.fillRect(0, 0, canvas.width, canvas.height);
             hmCtx.fillStyle = "white";
             hmCtx.fillRect(rx, ry, rw, rh);
-            const historyMaskBase64 = historyMaskCanvas.toDataURL("image/png").split(",")[1];
+            const historyMaskDataUrl = historyMaskCanvas.toDataURL("image/png");
+            const historyMaskBase64 = historyMaskDataUrl.split(",")[1];
             onEditComplete({
               sourceImage: image,
-              maskImage: { base64: historyMaskBase64, mimeType: "image/png" },
+              maskImage: {
+                base64: historyMaskBase64,
+                mimeType: "image/png",
+                dataUrl: historyMaskDataUrl,
+                name: `history_mask_${Date.now()}.png`,
+              },
               prompt,
               resultImage: finalResultBase64,
             });
@@ -636,7 +850,12 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
         const result = await editImage(image, maskImage, prompt);
         if (result) {
           setResultImage(result);
-          onEditComplete({ sourceImage: image, maskImage, prompt, resultImage: result });
+          onEditComplete({
+            sourceImage: image,
+            maskImage,
+            prompt,
+            resultImage: result,
+          });
         } else {
           throw new Error("API did not return an image.");
         }
@@ -671,7 +890,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
                   clearMask();
                 }}
                 className={`px-4 py-2 text-sm font-medium border border-[var(--border-2)] rounded-l-lg flex items-center gap-2 transition-colors ${
-                  editMode === "brush" ? "bg-[var(--bg-interactive)] text-white" : "bg-[var(--bg-surface-3)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)]"
+                  editMode === "brush"
+                    ? "bg-[var(--bg-interactive)] text-white"
+                    : "bg-[var(--bg-surface-3)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)]"
                 }`}
               >
                 <Icon name="brush" className="w-4 h-4" />
@@ -684,7 +905,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
                   clearMask();
                 }}
                 className={`px-4 py-2 text-sm font-medium border border-l-0 border-[var(--border-2)] rounded-r-lg flex items-center gap-2 transition-colors ${
-                  editMode === "rectangle" ? "bg-[var(--bg-interactive)] text-white" : "bg-[var(--bg-surface-3)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)]"
+                  editMode === "rectangle"
+                    ? "bg-[var(--bg-interactive)] text-white"
+                    : "bg-[var(--bg-surface-3)] text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)]"
                 }`}
               >
                 <Icon name="viewfinder" className="w-4 h-4" />
@@ -693,24 +916,50 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
             </div>
             {editMode === "brush" && (
               <div className="flex items-center gap-2 flex-grow max-w-xs">
-                <span className="text-sm text-[var(--text-secondary)] whitespace-nowrap">Cỡ Bút: {brushSize}px</span>
-                <input type="range" min="5" max="100" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} className="w-full h-2 bg-[var(--bg-surface-3)] rounded-lg appearance-none cursor-pointer accent-indigo-500" />
+                <span className="text-sm text-[var(--text-secondary)] whitespace-nowrap">
+                  Cỡ Bút: {brushSize}px
+                </span>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  value={brushSize}
+                  onChange={(e) => setBrushSize(Number(e.target.value))}
+                  className="w-full h-2 bg-[var(--bg-surface-3)] rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                />
               </div>
             )}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 bg-[var(--bg-surface-2)] p-1 rounded-md border border-[var(--border-2)]">
-                <button onClick={() => setZoomLevel((z) => Math.max(z - 0.2, 0.2))} className="p-1.5 hover:bg-[var(--bg-surface-3)] rounded text-[var(--text-primary)]" title="Thu nhỏ">
+                <button
+                  onClick={() => setZoomLevel((z) => Math.max(z - 0.2, 0.2))}
+                  className="p-1.5 hover:bg-[var(--bg-surface-3)] rounded text-[var(--text-primary)]"
+                  title="Thu nhỏ"
+                >
                   <Icon name="magnifying-glass-minus" className="w-4 h-4" />
                 </button>
-                <span className="text-xs w-10 text-center font-mono">{Math.round(zoomLevel * 100)}%</span>
-                <button onClick={() => setZoomLevel((z) => Math.min(z + 0.2, 5))} className="p-1.5 hover:bg-[var(--bg-surface-3)] rounded text-[var(--text-primary)]" title="Phóng to">
+                <span className="text-xs w-10 text-center font-mono">
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoomLevel((z) => Math.min(z + 0.2, 5))}
+                  className="p-1.5 hover:bg-[var(--bg-surface-3)] rounded text-[var(--text-primary)]"
+                  title="Phóng to"
+                >
                   <Icon name="magnifying-glass-plus" className="w-4 h-4" />
                 </button>
               </div>
-              <button onClick={handleUndo} disabled={drawingHistory.length === 0} className="px-3 py-2 text-sm font-semibold text-[var(--text-primary)] bg-[var(--bg-surface-3)] hover:bg-[var(--bg-surface-2)] rounded-md transition border border-[var(--border-2)] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+              <button
+                onClick={handleUndo}
+                disabled={drawingHistory.length === 0}
+                className="px-3 py-2 text-sm font-semibold text-[var(--text-primary)] bg-[var(--bg-surface-3)] hover:bg-[var(--bg-surface-2)] rounded-md transition border border-[var(--border-2)] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Icon name="arrow-uturn-left" className="w-4 h-4" /> Undo
               </button>
-              <button onClick={clearMask} className="px-3 py-2 text-sm font-semibold text-[var(--text-primary)] bg-[var(--bg-surface-3)] hover:bg-[var(--bg-surface-2)] rounded-md transition border border-[var(--border-2)] disabled:opacity-50">
+              <button
+                onClick={clearMask}
+                className="px-3 py-2 text-sm font-semibold text-[var(--text-primary)] bg-[var(--bg-surface-3)] hover:bg-[var(--bg-surface-2)] rounded-md transition border border-[var(--border-2)] disabled:opacity-50"
+              >
                 Xóa Mask
               </button>
             </div>
@@ -722,10 +971,17 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
               <span>1. Ảnh Gốc & Vùng Sửa</span>
               {image && (
                 <div className="flex gap-2">
-                  <button onClick={() => setIsSourceFullscreen(true)} className="text-xs px-2 py-1 bg-[var(--bg-surface-3)] hover:bg-[var(--bg-interactive)] rounded text-[var(--text-secondary)] hover:text-white flex items-center gap-1 transition-colors">
-                    <Icon name="arrows-expand" className="w-3 h-3" /> Phóng to gốc
+                  <button
+                    onClick={() => setIsSourceFullscreen(true)}
+                    className="text-xs px-2 py-1 bg-[var(--bg-surface-3)] hover:bg-[var(--bg-interactive)] rounded text-[var(--text-secondary)] hover:text-white flex items-center gap-1 transition-colors"
+                  >
+                    <Icon name="arrows-expand" className="w-3 h-3" /> Phóng to
+                    gốc
                   </button>
-                  <button onClick={() => setIsZoomed(true)} className="text-xs px-2 py-1 bg-[var(--bg-surface-3)] hover:bg-[var(--bg-interactive)] rounded text-[var(--text-secondary)] hover:text-white flex items-center gap-1 transition-colors">
+                  <button
+                    onClick={() => setIsZoomed(true)}
+                    className="text-xs px-2 py-1 bg-[var(--bg-surface-3)] hover:bg-[var(--bg-interactive)] rounded text-[var(--text-secondary)] hover:text-white flex items-center gap-1 transition-colors"
+                  >
                     <Icon name="brush" className="w-3 h-3" /> Chế độ vẽ zoom
                   </button>
                 </div>
@@ -733,54 +989,125 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
             </h2>
             <div className="flex-grow flex items-center justify-center bg-black/20 rounded-lg border border-[var(--border-2)] relative overflow-hidden">
               {image ? (
-                <div ref={sourceContainerRef} className="relative w-full h-full overflow-auto flex items-center justify-center">
-                  <div style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center", transition: "transform 0.1s ease-out" }} className="relative">
-                    <canvas ref={sourceImageCanvasRef} className="block max-w-full max-h-full object-contain" />
-                    <canvas ref={sourceDrawingCanvasRef} className="absolute inset-0 w-full h-full object-contain" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} />
+                <div
+                  ref={sourceContainerRef}
+                  className="relative w-full h-full overflow-auto flex items-center justify-center"
+                >
+                  <div
+                    style={{
+                      transform: `scale(${zoomLevel})`,
+                      transformOrigin: "center",
+                      transition: "transform 0.1s ease-out",
+                    }}
+                    className="relative"
+                  >
+                    <canvas
+                      ref={sourceImageCanvasRef}
+                      className="block max-w-full max-h-full object-contain"
+                    />
+                    <canvas
+                      ref={sourceDrawingCanvasRef}
+                      className="absolute inset-0 w-full h-full object-contain"
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                    />
                   </div>
                 </div>
               ) : (
-                <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()} className={`w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors ${isDraggingOver ? "bg-[var(--bg-surface-2)]" : ""}`}>
-                  <Icon name="photo" className="w-16 h-16 text-[var(--text-tertiary)] mb-4" />
-                  <p className="text-[var(--text-secondary)] mb-2">Nhấp hoặc kéo tệp vào đây</p>
-                  <p className="text-xs text-[var(--text-tertiary)]">PNG, JPG, WEBP</p>
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`w-full h-full flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                    isDraggingOver ? "bg-[var(--bg-surface-2)]" : ""
+                  }`}
+                >
+                  <Icon
+                    name="photo"
+                    className="w-16 h-16 text-[var(--text-tertiary)] mb-4"
+                  />
+                  <p className="text-[var(--text-secondary)] mb-2">
+                    Nhấp hoặc kéo tệp vào đây
+                  </p>
+                  <p className="text-xs text-[var(--text-tertiary)]">
+                    PNG, JPG, WEBP
+                  </p>
                 </div>
               )}
             </div>
             {image && (
-              <button onClick={() => { setImage(null); setResultImage(null); }} className="mt-4 w-full bg-[var(--bg-surface-3)] text-[var(--text-secondary)] hover:bg-[var(--text-danger)] hover:text-white py-2 rounded transition-colors text-sm flex items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  setImage(null);
+                  setResultImage(null);
+                }}
+                className="mt-4 w-full bg-[var(--bg-surface-3)] text-[var(--text-secondary)] hover:bg-[var(--text-danger)] hover:text-white py-2 rounded transition-colors text-sm flex items-center justify-center gap-2"
+              >
                 <Icon name="trash" className="w-4 h-4" /> Xóa ảnh & làm lại
               </button>
             )}
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/webp" />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/png, image/jpeg, image/webp"
+            />
           </div>
           <div className="bg-[var(--bg-surface-1)] p-6 rounded-xl border border-[var(--border-1)] flex flex-col h-full min-h-[500px]">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 text-center">2. Kết Quả Chỉnh Sửa</h2>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 text-center">
+              2. Kết Quả Chỉnh Sửa
+            </h2>
             <div className="flex-grow bg-black/20 rounded-lg flex items-center justify-center border border-[var(--border-2)] relative overflow-hidden group">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-slate-100"></div>
-                  <p className="mt-4 font-semibold text-[var(--text-primary)]">AI đang xử lý...</p>
+                  <p className="mt-4 font-semibold text-[var(--text-primary)]">
+                    AI đang xử lý...
+                  </p>
                 </div>
               ) : resultImage ? (
                 <>
                   <div className="relative w-full h-full flex items-center justify-center">
-                    <ImageCompareSlider beforeImage={sourceImageUrlForSlider} afterImage={resultImage} />
+                    <ImageCompareSlider
+                      beforeImage={sourceImageUrlForSlider}
+                      afterImage={resultImage}
+                    />
                   </div>
                   <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                    <button onClick={() => setIsResultFullscreen(true)} className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5" title="Xem Toàn Màn Hình">
+                    <button
+                      onClick={() => setIsResultFullscreen(true)}
+                      className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5"
+                      title="Xem Toàn Màn Hình"
+                    >
                       <Icon name="arrows-expand" className="w-4 h-4" />
                       <span>Phóng To</span>
                     </button>
-                    <a href={resultImage} download={`nbox-ai-edited-${Date.now()}.png`} className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5" title="Tải ảnh">
+                    <a
+                      href={resultImage}
+                      download={`nbox-ai-edited-${Date.now()}.png`}
+                      className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5"
+                      title="Tải ảnh"
+                    >
                       <Icon name="download" className="w-4 h-4" />
                       <span>Tải</span>
                     </a>
-                    <button onClick={handleContinueEditing} className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5" title="Chỉnh sửa tiếp ảnh này">
+                    <button
+                      onClick={handleContinueEditing}
+                      className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5"
+                      title="Chỉnh sửa tiếp ảnh này"
+                    >
                       <Icon name="arrow-path" className="w-4 h-4" />
                       <span>Sửa tiếp</span>
                     </button>
-                    <button onClick={() => onCreateVideoRequest(resultImage!)} className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5" title="Tạo Video từ ảnh này">
+                    <button
+                      onClick={() => onCreateVideoRequest(resultImage!)}
+                      className="bg-[var(--bg-surface-3)]/80 backdrop-blur-sm border border-[var(--border-2)] hover:bg-[var(--bg-interactive)] text-[var(--text-primary)] hover:text-[var(--text-interactive)] font-bold text-xs px-3 py-2 rounded-md transition-colors flex items-center gap-1.5"
+                      title="Tạo Video từ ảnh này"
+                    >
                       <Icon name="film" className="w-4 h-4" />
                       <span>Tạo Video</span>
                     </button>
@@ -788,8 +1115,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
                 </>
               ) : (
                 <div className="text-center text-[var(--text-tertiary)]">
-                  <Icon name="sparkles" className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>{image ? "Kết quả sẽ xuất hiện ở đây." : "Vui lòng tải lên một ảnh để bắt đầu."}</p>
+                  <Icon
+                    name="sparkles"
+                    className="w-16 h-16 mx-auto mb-4 opacity-50"
+                  />
+                  <p>
+                    {image
+                      ? "Kết quả sẽ xuất hiện ở đây."
+                      : "Vui lòng tải lên một ảnh để bắt đầu."}
+                  </p>
                 </div>
               )}
             </div>
@@ -799,11 +1133,22 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
           <div className="bg-[var(--bg-surface-1)] p-6 rounded-xl border border-[var(--border-1)]">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="flex-grow">
-                <label className="block text-sm font-semibold text-[var(--text-primary)] mb-2">3. Mô Tả Chỉnh Sửa</label>
-                <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Ví dụ: thêm một bể bơi, xóa chiếc xe ô tô, đổi tường thành gạch đỏ..." className="w-full bg-[var(--bg-surface-3)] p-4 rounded-lg h-32 resize-none text-sm focus:ring-2 focus:ring-[var(--ring-focus)] focus:outline-none border border-[var(--border-2)]" />
+                <label className="block text-sm font-semibold text-[var(--text-primary)] mb-2">
+                  3. Mô Tả Chỉnh Sửa
+                </label>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Ví dụ: thêm một bể bơi, xóa chiếc xe ô tô, đổi tường thành gạch đỏ..."
+                  className="w-full bg-[var(--bg-surface-3)] p-4 rounded-lg h-32 resize-none text-sm focus:ring-2 focus:ring-[var(--ring-focus)] focus:outline-none border border-[var(--border-2)]"
+                />
               </div>
               <div className="flex flex-col justify-end gap-3 lg:w-1/4">
-                <button onClick={handleGenerate} disabled={isLoading || !image} className="w-full h-14 bg-[var(--bg-interactive)] hover:bg-[var(--bg-interactive-hover)] text-[var(--text-interactive)] font-bold rounded-lg transition-all flex items-center justify-center gap-2 disabled:bg-[var(--bg-disabled)] disabled:cursor-not-allowed shadow-lg">
+                <button
+                  onClick={handleGenerate}
+                  disabled={isLoading || !image}
+                  className="w-full h-14 bg-[var(--bg-interactive)] hover:bg-[var(--bg-interactive-hover)] text-[var(--text-interactive)] font-bold rounded-lg transition-all flex items-center justify-center gap-2 disabled:bg-[var(--bg-disabled)] disabled:cursor-not-allowed shadow-lg"
+                >
                   {isLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
@@ -812,21 +1157,56 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ initialImage, onClearI
                   ) : (
                     <>
                       <Icon name="sparkles" className="w-6 h-6" />
-                      <span>{editMode === "rectangle" ? "Sửa Vùng Đã Chọn" : "Bắt Đầu Chỉnh Sửa"}</span>
+                      <span>
+                        {editMode === "rectangle"
+                          ? "Sửa Vùng Đã Chọn"
+                          : "Bắt Đầu Chỉnh Sửa"}
+                      </span>
                     </>
                   )}
                 </button>
                 <div className="text-xs text-[var(--text-tertiary)] text-center">
-                  {editMode === "rectangle" ? <p>Ảnh crop sẽ được chỉnh sửa và <span className="text-[var(--text-accent)] font-semibold">tự động ghép</span> vào ảnh gốc.</p> : "Tô vùng cần sửa và nhấn nút để AI xử lý."}
+                  {editMode === "rectangle" ? (
+                    <p>
+                      Ảnh crop sẽ được chỉnh sửa và{" "}
+                      <span className="text-[var(--text-accent)] font-semibold">
+                        tự động ghép
+                      </span>{" "}
+                      vào ảnh gốc.
+                    </p>
+                  ) : (
+                    "Tô vùng cần sửa và nhấn nút để AI xử lý."
+                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
       </div>
-      {isZoomed && image && <ZoomEditorModal image={image} initialDrawingData={drawingHistory.length > 0 ? drawingHistory[drawingHistory.length - 1] : null} onClose={() => setIsZoomed(false)} onSave={handleZoomSave} />}
-      {isResultFullscreen && resultImage && <ImageViewerModal imageUrl={resultImage} onClose={() => setIsResultFullscreen(false)} />}
-      {isSourceFullscreen && sourceImageUrlForSlider && <ImageViewerModal imageUrl={sourceImageUrlForSlider} onClose={() => setIsSourceFullscreen(false)} />}
+      {isZoomed && image && (
+        <ZoomEditorModal
+          image={image}
+          initialDrawingData={
+            drawingHistory.length > 0
+              ? drawingHistory[drawingHistory.length - 1]
+              : null
+          }
+          onClose={() => setIsZoomed(false)}
+          onSave={handleZoomSave}
+        />
+      )}
+      {isResultFullscreen && resultImage && (
+        <ImageViewerModal
+          imageUrl={resultImage}
+          onClose={() => setIsResultFullscreen(false)}
+        />
+      )}
+      {isSourceFullscreen && sourceImageUrlForSlider && (
+        <ImageViewerModal
+          imageUrl={sourceImageUrlForSlider}
+          onClose={() => setIsSourceFullscreen(false)}
+        />
+      )}
     </>
   );
 };

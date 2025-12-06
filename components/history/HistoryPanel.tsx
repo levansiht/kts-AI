@@ -45,7 +45,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-grow min-w-0 mr-2">
                   <p className="font-semibold text-sm">
-                    {item.images.length} ảnh
+                    {item.generatedImages.length} ảnh
                   </p>
                   <p
                     className="text-xs text-[var(--text-secondary)] truncate"
@@ -55,14 +55,20 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                   </p>
                 </div>
                 <p className="text-xs text-[var(--text-tertiary)] self-start flex-shrink-0">
-                  {item.timestamp}
+                  {new Date(item.timestamp).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
               <div className="flex overflow-x-auto gap-2 pb-1">
-                {item.images.map((image, index) => (
+                {item.generatedImages.map((image, index) => (
                   <img
                     key={index}
-                    src={image}
+                    src={
+                      image.dataUrl ||
+                      `data:${image.mimeType};base64,${image.base64}`
+                    }
                     alt={`History thumbnail ${index + 1}`}
                     className="w-20 h-20 object-cover rounded flex-shrink-0"
                   />
