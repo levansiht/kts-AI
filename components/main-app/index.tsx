@@ -67,6 +67,15 @@ export default function MainApp({
   // Theme selector state
   const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
 
+  // Additional states for RenderTab
+  const [upscalingIndex, setUpscalingIndex] = useState<number | null>(null);
+  const [progressState, setProgressState] = useState<{
+    message: string;
+    image: string | null;
+  } | null>(null);
+  const [numImages, setNumImages] = useState(4);
+  const [aspectRatio, setAspectRatio] = useState("Auto");
+
   // Handle source image upload
   const handleSourceImageUpload = (
     tab: "exterior" | "interior" | "floorplan",
@@ -254,6 +263,166 @@ export default function MainApp({
     });
 
     setImageForEditing(null);
+  };
+
+  // Helper function to convert dataUrl to SourceImage
+  const dataUrlToSourceImage = (dataUrl: string): SourceImage | null => {
+    const match = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+    if (!match) return null;
+    return {
+      base64: match[2],
+      mimeType: match[1],
+      dataUrl: dataUrl,
+      name: `image_${Date.now()}.png`,
+    };
+  };
+
+  // Handle upscale for generated images
+  const handleImageUpscale = async (index: number, target: "2k" | "4k") => {
+    const tab = activeTab as "exterior" | "interior" | "floorplan";
+    const imageUrl = tabStates[tab].generatedImages[index];
+    if (!imageUrl) return;
+
+    const imageToUpscale = dataUrlToSourceImage(imageUrl);
+    if (!imageToUpscale) {
+      alert("Định dạng ảnh không hợp lệ để upscale.");
+      return;
+    }
+
+    setUpscalingIndex(index);
+    try {
+      const targetUpperCase = target.toUpperCase() as "2K" | "4K";
+      const upscaledImage = await upscale.handleUpscale(targetUpperCase, "pro");
+      if (upscaledImage) {
+        // Update the image in generated images - upscaledImage is SourceImage, need dataUrl
+        const newImages = [...tabStates[tab].generatedImages];
+        newImages[index] = upscaledImage.dataUrl;
+        updateTabState(tab, { generatedImages: newImages });
+      }
+    } catch (error) {
+      console.error("Upscale failed:", error);
+      alert(`Đã xảy ra lỗi khi upscale ảnh lên ${target.toUpperCase()}`);
+    } finally {
+      setUpscalingIndex(null);
+    }
+  };
+
+  // Handle change angle
+  const handleChangeAngle = (index: number) => {
+    const tab = activeTab as "exterior" | "interior" | "floorplan";
+    const imageUrl = tabStates[tab].generatedImages[index];
+    if (!imageUrl) return;
+
+    const imageToUse = dataUrlToSourceImage(imageUrl);
+    if (imageToUse) {
+      updateTabState(tab, {
+        sourceImage: imageToUse,
+        referenceImage: null,
+      });
+      // Scroll to angle section would go here
+    }
+  };
+
+  // Handle fullscreen
+  const handleFullscreen = (index: number) => {
+    // This would open a fullscreen modal - to be implemented
+    console.log("Fullscreen image at index:", index);
+  };
+
+  // Handle create video request
+  const handleCreateVideoRequest = (imageUrl: string) => {
+    const imageToUse = dataUrlToSourceImage(imageUrl);
+    if (imageToUse) {
+      // Navigate to utilities with video creation
+      setActiveTab("utilities");
+      console.log("Create video from image:", imageToUse);
+    }
+  };
+
+  // Handle color adjustment request
+  const handleColorAdjustmentRequest = (imageUrl: string) => {
+    console.log("Color adjustment for:", imageUrl);
+    // To be implemented
+  };
+
+  // Handle clear history for a tab
+  const handleClearHistory = (tab: "exterior" | "interior" | "floorplan") => {
+    const tabNames = {
+      exterior: "ngoại thất",
+      interior: "nội thất",
+      floorplan: "mặt bằng",
+    };
+    if (
+      window.confirm(
+        `Bạn có chắc muốn xóa toàn bộ lịch sử render ${tabNames[tab]}?`
+      )
+    ) {
+      // Clear history for the specific tab
+      history.clearHistory(tab);
+    }
+  };
+
+  // Handle select history item
+  const handleSelectHistoryItem = (
+    item: any,
+    tab: "exterior" | "interior" | "floorplan"
+  ) => {
+    updateTabState(tab, {
+      generatedImages: item.generatedImages.map((img: any) => img.dataUrl),
+      selectedImageIndex: 0,
+    });
+  };
+
+  // Handle select image index
+  const handleSelectImageIndex = (
+    tab: "exterior" | "interior" | "floorplan",
+    index: number
+  ) => {
+    updateTabState(tab, { selectedImageIndex: index });
+  };
+
+  // Update generate handlers to use numImages and aspectRatio
+  const handleGenerateWithPrompt = async (
+    tab: "exterior" | "interior" | "floorplan",
+    prompt: string,
+    isAngleChange: boolean = false
+  ) => {
+    const sourceImage = tabStates[tab].sourceImage;
+    if (!sourceImage) return;
+
+    const generation =
+      tab === "exterior"
+        ? exteriorGeneration
+        : tab === "interior"
+        ? interiorGeneration
+        : floorplanGeneration;
+
+    await generation.generateImages({
+      sourceImage,
+      referenceImage: isAngleChange ? null : tabStates[tab].referenceImage,
+      prompt,
+      modelTier: modelSelection.modelTier,
+      imageQuality: modelSelection.imageQuality,
+      numberOfImages: numImages,
+      onComplete: (images) => {
+        if (images.length > 0) {
+          history.addToHistory(tab, {
+            id: Date.now().toString(),
+            sourceImage,
+            referenceImage: tabStates[tab].referenceImage,
+            generatedImages: images,
+            prompt,
+            timestamp: Date.now(),
+            modelTier: modelSelection.modelTier,
+            imageQuality: modelSelection.imageQuality,
+          });
+
+          updateTabState(tab, {
+            generatedImages: images.map((img) => img.dataUrl),
+          });
+        }
+      },
+    });
   };
   return (
     <div className="min-h-screen p-8 fade-in-up relative pb-24">
@@ -513,6 +682,7 @@ export default function MainApp({
               referenceImage={tabStates.exterior.referenceImage}
               generatedImages={tabStates.exterior.generatedImages}
               selectedImageIndex={tabStates.exterior.selectedImageIndex}
+              history={history.exteriorHistory}
               onSourceImageUpload={(img) =>
                 handleSourceImageUpload("exterior", img)
               }
@@ -523,8 +693,33 @@ export default function MainApp({
               onReferenceImageRemove={() =>
                 handleReferenceImageRemove("exterior")
               }
-              onGenerate={handleExteriorGenerate}
+              onGenerate={(prompt, isAngle) =>
+                handleGenerateWithPrompt("exterior", prompt, isAngle)
+              }
+              onSelectImageIndex={(idx) =>
+                handleSelectImageIndex("exterior", idx)
+              }
+              onChangeAngle={handleChangeAngle}
+              onFullscreen={handleFullscreen}
+              onUpscale={handleImageUpscale}
+              onEditRequest={handleEditRequest}
+              onCreateVideoRequest={handleCreateVideoRequest}
+              onColorAdjustmentRequest={handleColorAdjustmentRequest}
+              onClearHistory={() => handleClearHistory("exterior")}
+              onSelectHistoryItem={(item) =>
+                handleSelectHistoryItem(item, "exterior")
+              }
               isGenerating={exteriorGeneration.isGenerating}
+              upscalingIndex={upscalingIndex}
+              progressState={progressState}
+              modelTier={modelSelection.modelTier}
+              imageQuality={modelSelection.imageQuality}
+              onModelTierChange={modelSelection.setModelTier}
+              onImageQualityChange={modelSelection.setImageQuality}
+              numImages={numImages}
+              onNumImagesChange={setNumImages}
+              aspectRatio={aspectRatio}
+              onAspectRatioChange={setAspectRatio}
             />
           )}
 
@@ -535,6 +730,7 @@ export default function MainApp({
               referenceImage={tabStates.interior.referenceImage}
               generatedImages={tabStates.interior.generatedImages}
               selectedImageIndex={tabStates.interior.selectedImageIndex}
+              history={history.interiorHistory}
               onSourceImageUpload={(img) =>
                 handleSourceImageUpload("interior", img)
               }
@@ -545,8 +741,33 @@ export default function MainApp({
               onReferenceImageRemove={() =>
                 handleReferenceImageRemove("interior")
               }
-              onGenerate={handleInteriorGenerate}
+              onGenerate={(prompt, isAngle) =>
+                handleGenerateWithPrompt("interior", prompt, isAngle)
+              }
+              onSelectImageIndex={(idx) =>
+                handleSelectImageIndex("interior", idx)
+              }
+              onChangeAngle={handleChangeAngle}
+              onFullscreen={handleFullscreen}
+              onUpscale={handleImageUpscale}
+              onEditRequest={handleEditRequest}
+              onCreateVideoRequest={handleCreateVideoRequest}
+              onColorAdjustmentRequest={handleColorAdjustmentRequest}
+              onClearHistory={() => handleClearHistory("interior")}
+              onSelectHistoryItem={(item) =>
+                handleSelectHistoryItem(item, "interior")
+              }
               isGenerating={interiorGeneration.isGenerating}
+              upscalingIndex={upscalingIndex}
+              progressState={progressState}
+              modelTier={modelSelection.modelTier}
+              imageQuality={modelSelection.imageQuality}
+              onModelTierChange={modelSelection.setModelTier}
+              onImageQualityChange={modelSelection.setImageQuality}
+              numImages={numImages}
+              onNumImagesChange={setNumImages}
+              aspectRatio={aspectRatio}
+              onAspectRatioChange={setAspectRatio}
             />
           )}
 
@@ -557,6 +778,7 @@ export default function MainApp({
               referenceImage={tabStates.floorplan.referenceImage}
               generatedImages={tabStates.floorplan.generatedImages}
               selectedImageIndex={tabStates.floorplan.selectedImageIndex}
+              history={history.floorplanHistory}
               onSourceImageUpload={(img) =>
                 handleSourceImageUpload("floorplan", img)
               }
@@ -567,8 +789,33 @@ export default function MainApp({
               onReferenceImageRemove={() =>
                 handleReferenceImageRemove("floorplan")
               }
-              onGenerate={handleFloorplanGenerate}
+              onGenerate={(prompt, isAngle) =>
+                handleGenerateWithPrompt("floorplan", prompt, isAngle)
+              }
+              onSelectImageIndex={(idx) =>
+                handleSelectImageIndex("floorplan", idx)
+              }
+              onChangeAngle={handleChangeAngle}
+              onFullscreen={handleFullscreen}
+              onUpscale={handleImageUpscale}
+              onEditRequest={handleEditRequest}
+              onCreateVideoRequest={handleCreateVideoRequest}
+              onColorAdjustmentRequest={handleColorAdjustmentRequest}
+              onClearHistory={() => handleClearHistory("floorplan")}
+              onSelectHistoryItem={(item) =>
+                handleSelectHistoryItem(item, "floorplan")
+              }
               isGenerating={floorplanGeneration.isGenerating}
+              upscalingIndex={upscalingIndex}
+              progressState={progressState}
+              modelTier={modelSelection.modelTier}
+              imageQuality={modelSelection.imageQuality}
+              onModelTierChange={modelSelection.setModelTier}
+              onImageQualityChange={modelSelection.setImageQuality}
+              numImages={numImages}
+              onNumImagesChange={setNumImages}
+              aspectRatio={aspectRatio}
+              onAspectRatioChange={setAspectRatio}
             />
           )}
 
