@@ -2,13 +2,38 @@ import { GoogleGenAI, Modality, Type } from "@google/genai";
 import type { GenerateContentResponse } from "@google/genai";
 import type { SourceImage } from "@/types";
 
-const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+// Check if running on server or client
+const isServer = typeof window === "undefined";
+
+// Use server-side key if available, otherwise client-side key
+const API_KEY = isServer
+  ? process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY
+  : process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
 if (!API_KEY) {
-  console.error("NEXT_PUBLIC_GEMINI_API_KEY environment variable is not set.");
+  if (isServer) {
+    console.error("GEMINI_API_KEY environment variable is not set on server.");
+  } else {
+    console.warn(
+      "NEXT_PUBLIC_GEMINI_API_KEY not set. API calls will fail in browser."
+    );
+  }
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
+
+/**
+ * Checks if the AI client is available
+ * @throws Error if API key is not configured
+ */
+const ensureAIClient = () => {
+  if (!ai) {
+    throw new Error(
+      "Gemini API key is not configured. Please set GEMINI_API_KEY or NEXT_PUBLIC_GEMINI_API_KEY environment variable."
+    );
+  }
+  return ai;
+};
 
 const INTERIOR_SKETCH_PROMPT =
   "Biến đổi hình ảnh nội thất này thành một bản phác thảo kiến trúc nghệ thuật vẽ tay. Phong cách phải là một bức tranh màu nước đẹp mắt trên nền các đường nét mực tinh tế. Nhấn mạnh cảm giác 'vẽ tay' với các mảng màu nước loang, phóng khoáng và các vệt cọ có thể nhìn thấy. Kết quả cuối cùng phải trông giống như một bản phác thảo ý tưởng chuyên nghiệp, không phải là một bản render kỹ thuật số sạch sẽ. Điều cực kỳ quan trọng là phải bảo tồn chính xác bố cục phòng, đồ nội thất và bảng màu cốt lõi từ hình ảnh gốc, nhưng diễn giải lại mọi thứ thông qua phương tiện phác thảo màu nước nghệ thuật này.";
@@ -92,14 +117,12 @@ const getClosestAspectRatio = (width: number, height: number): string => {
 export const describeInteriorImage = async (
   sourceImage: SourceImage
 ): Promise<string> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   const engineeredPrompt =
     "Analyze the provided image of a room. Your response must be a concise prompt in Vietnamese, suitable for regenerating a photorealistic version of the image. The prompt must start with the exact phrase: 'tạo ảnh chụp thực tế của căn phòng...'. Following that phrase, briefly describe the room's key materials and lighting to achieve a realistic photographic look. Keep the description short and focused.";
 
-  const response = await ai.models.generateContent({
+  const response = await client.models.generateContent({
     model: "gemini-2.5-flash",
     contents: {
       parts: [
@@ -125,14 +148,12 @@ export const describeInteriorImage = async (
 export const describeMasterplanImage = async (
   sourceImage: SourceImage
 ): Promise<string> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   const engineeredPrompt =
     "Analyze the provided 2D masterplan image. Your response must be a concise prompt in Vietnamese, suitable for generating a photorealistic 3D render of the project. The prompt must start with the exact phrase: 'Biến masterplan này thành ảnh chụp dự án...'. Following that phrase, briefly describe the project's key features like 'khu nghỉ dưỡng ven biển', 'khu đô thị hiện đại', 'công viên trung tâm' based on the drawing. Keep the description short and focused.";
 
-  const response = await ai.models.generateContent({
+  const response = await client.models.generateContent({
     model: "gemini-2.5-flash",
     contents: {
       parts: [
@@ -176,14 +197,9 @@ export const generateImages = async (
   modelTier: "free" | "pro" = "free",
   quality: "1K" | "2K" | "4K" = "1K"
 ): Promise<string[]> => {
-  // Ensure API key is fresh for Pro model calls which might require user-selected key
-  const currentApiKey = process.env.API_KEY;
-  if (!currentApiKey) {
-    throw new Error("API_KEY is not configured.");
-  }
-  // Create a new instance to pick up potential key changes (though process.env is usually static,
-  // AI Studio environment might inject it dynamically)
-  const currentAi = new GoogleGenAI({ apiKey: currentApiKey });
+  const client = ensureAIClient();
+
+  // Determine model based on tier and quality
 
   // Pre-calculate dimensions if needed for Auto aspect ratio
   let detectedAspectRatio: string | undefined;
@@ -296,7 +312,7 @@ export const generateImages = async (
 
       parts.push(textPart);
 
-      const response = await currentAi.models.generateContent({
+      const response = await client.models.generateContent({
         model: modelName,
         contents: { parts },
         config: config,
@@ -321,12 +337,7 @@ export const upscaleImage = async (
   target: "2k" | "4k",
   model: "flash" | "pro" = "flash"
 ): Promise<string | null> => {
-  const currentApiKey = process.env.API_KEY;
-  if (!currentApiKey) {
-    throw new Error("API_KEY is not configured.");
-  }
-
-  const currentAi = new GoogleGenAI({ apiKey: currentApiKey });
+  const client = ensureAIClient();
 
   // Force 'pro' model if target is 2k or 4k because flash doesn't support high resolution settings
   // and to ensure aspect ratio preservation which is better handled by Pro.
@@ -365,7 +376,7 @@ export const upscaleImage = async (
     }
   }
 
-  const response = await currentAi.models.generateContent({
+  const response = await client.models.generateContent({
     model: modelName,
     contents: {
       parts: [
@@ -398,13 +409,11 @@ export const editImage = async (
   maskImage: SourceImage,
   prompt: string
 ): Promise<string | null> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   const engineeredPrompt = `You are an expert photo editor. You will receive an original image, a mask image, and a text prompt. Your task is to edit the original image *exclusively* within the white area defined by the mask. The black area of the mask represents the parts of the image that MUST remain completely untouched. The user's instruction for the edit is: "${prompt}". Whether this involves adding a new object, removing an existing one, or altering features, confine all changes strictly to the masked region. The final output should be a photorealistic image where the edits are seamlessly blended with the surrounding, unchanged areas.`;
 
-  const response = await ai.models.generateContent({
+  const response = await client.models.generateContent({
     model: "gemini-2.5-flash-image",
     contents: {
       parts: [
@@ -436,11 +445,9 @@ export const editImage = async (
 export const generateImageFromText = async (
   prompt: string
 ): Promise<string | null> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
-  const response = await ai.models.generateImages({
+  const response = await client.models.generateImages({
     model: "imagen-4.0-generate-001",
     prompt: prompt,
     config: {
@@ -469,9 +476,7 @@ export const generateImageFromText = async (
 export const generatePromptsFromImage = async (
   sourceImage: SourceImage
 ): Promise<{ medium: string[]; closeup: string[]; interior: string[] }> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   const engineeredPrompt = `Analyze the provided architectural image. Based on its style, materials, and environment, generate a list of diverse and creative prompts for photorealistic renders. Your response must be a JSON object.
 
@@ -482,7 +487,7 @@ export const generatePromptsFromImage = async (
 
   All prompts must be in Vietnamese.`;
 
-  const response = await ai.models.generateContent({
+  const response = await client.models.generateContent({
     model: "gemini-2.5-flash", // Using flash to avoid 429 Resource Exhausted errors
     contents: {
       parts: [
@@ -549,9 +554,7 @@ export const generateVideo = async (
   sourceImage: SourceImage | null,
   onStatusUpdate: (status: string) => void
 ): Promise<string | null> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   onStatusUpdate("Bắt đầu yêu cầu tạo video...");
 
@@ -571,7 +574,7 @@ export const generateVideo = async (
     };
   }
 
-  operation = await ai.models.generateVideos(videoParams);
+  operation = await client.models.generateVideos(videoParams);
 
   onStatusUpdate(
     "Yêu cầu đã được gửi. Đang chờ AI xử lý. Quá trình này có thể mất vài phút."
@@ -586,7 +589,7 @@ export const generateVideo = async (
     onStatusUpdate(
       `Đang kiểm tra tiến độ lần thứ ${pollCount}... Vui lòng kiên nhẫn.`
     );
-    operation = await ai.operations.getVideosOperation({
+    operation = await client.operations.getVideosOperation({
       operation: operation,
     });
   }
@@ -690,9 +693,7 @@ export const generateVirtualTourImage = async (
 export const generateMoodImages = async (
   sourceImage: SourceImage
 ): Promise<string[]> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   const prompts = [
     "Ảnh chụp thực tế của công trình từ bản sketch, bối cảnh ban ngày lúc 10 giờ sáng với nắng gắt và bóng đổ sắc nét.",
@@ -739,9 +740,7 @@ export const improveExteriorRender = async (
   finalPrompt: string,
   onProgress: (message: string, currentImage: string | null) => void
 ): Promise<string | null> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   // --- Step 1: Isolate the building ---
   onProgress(
@@ -835,9 +834,7 @@ export const improveInteriorRender = async (
   finalPrompt: string,
   onProgress: (message: string, currentImage: string | null) => void
 ): Promise<string | null> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   // --- Step 1: Convert to sketch ---
   onProgress(
@@ -913,9 +910,7 @@ export const generateInteriorRenderTwoStep = async (
   modelTier: "free" | "pro" = "free",
   quality: "1K" | "2K" | "4K" = "1K"
 ): Promise<string[]> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   // --- Step 1: Convert to Sketch ---
   onProgress(
@@ -979,13 +974,11 @@ export const generateInteriorRenderTwoStep = async (
 export const generateCompletionPrompts = async (
   sourceImage: SourceImage
 ): Promise<string[]> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   const engineeredPrompt = `Analyze the provided image of an unfinished construction site in Vietnam. Your goal is to suggest ways to complete it. Generate exactly 10 diverse and creative prompts in Vietnamese for photorealistic renders. The prompts must describe popular architectural styles for residential houses in Vietnam (e.g., Modern, Neoclassical, Indochine, Tropical, Tube House styles). Each prompt must start with 'Ảnh chụp thực tế hoàn thiện công trình'. Your response must be a JSON object with a single key "prompts" which is an array of 10 strings.`;
 
-  const response = await ai.models.generateContent({
+  const response = await client.models.generateContent({
     model: "gemini-2.5-flash", // Changed from pro to flash
     contents: {
       parts: [
@@ -1041,13 +1034,11 @@ export const generateCompletionPrompts = async (
 export const generateInteriorCompletionPrompts = async (
   sourceImage: SourceImage
 ): Promise<string[]> => {
-  if (!API_KEY) {
-    throw new Error("API_KEY is not configured.");
-  }
+  const client = ensureAIClient();
 
   const engineeredPrompt = `Analyze the provided image of an unfinished, empty room in Vietnam. Your goal is to suggest ways to furnish and complete it. Generate exactly 10 diverse and creative prompts in Vietnamese for photorealistic interior renders. The prompts must describe popular interior design styles in Vietnam (e.g., Modern, Indochine, Scandinavian, Minimalist, Wabi-sabi, Neoclassical). Each prompt must start with 'Hoàn thiện nội thất căn phòng theo phong cách'. Your response must be a JSON object with a single key "prompts" which is an array of 10 strings.`;
 
-  const response = await ai.models.generateContent({
+  const response = await client.models.generateContent({
     model: "gemini-2.5-flash", // Changed from pro to flash
     contents: {
       parts: [
