@@ -1,0 +1,522 @@
+"use client";
+
+import { useState } from "react";
+import { Icon } from "@/components/icons/Icon";
+import TabButton from "@/components/ui/TabButton";
+import type { AppTab } from "@/types/app";
+import type { SourceImage } from "@/types";
+import { useRenderTabs } from "@/hooks/useRenderTabs";
+import { useExteriorPrompt } from "@/hooks/useExteriorPrompt";
+import { useInteriorPrompt } from "@/hooks/useInteriorPrompt";
+import { useFloorplanPrompt } from "@/hooks/useFloorplanPrompt";
+import { useHistory } from "@/hooks/useHistory";
+import { useModelSelection } from "@/hooks/useModelSelection";
+import { useUpscale } from "@/hooks/useUpscale";
+import { useImageGeneration } from "@/hooks/useImageGeneration";
+import { RenderTab } from "@/components/tabs/RenderTab";
+import { UpscaleTab } from "@/components/tabs/UpscaleTab";
+import { UtilitiesTab } from "@/components/tabs/UtilitiesTab";
+import { VirtualTourTab } from "@/components/tabs/VirtualTourTab";
+import { ImageEditor } from "@/components/editor/ImageEditor";
+import { UpscaleModal } from "@/components/modals/UpscaleModal";
+
+interface MainAppProps {
+  activeTab: AppTab;
+  setActiveTab: (tab: AppTab) => void;
+  theme: string;
+  setTheme: (
+    theme: "dark" | "light" | "orange" | "green" | "architect" | "xmas"
+  ) => void;
+  onBackToHome: () => void;
+}
+
+export default function MainApp({
+  activeTab,
+  setActiveTab,
+  theme,
+  setTheme,
+  onBackToHome,
+}: MainAppProps) {
+  // Tab states
+  const { tabStates, updateTabState } = useRenderTabs();
+
+  // Prompt management hooks
+  const exteriorPrompt = useExteriorPrompt();
+  const interiorPrompt = useInteriorPrompt();
+  const floorplanPrompt = useFloorplanPrompt();
+
+  // History management
+  const history = useHistory();
+
+  // Model and quality selection
+  const modelSelection = useModelSelection();
+
+  // Upscale functionality
+  const upscale = useUpscale();
+
+  // Image generation for each tab
+  const exteriorGeneration = useImageGeneration();
+  const interiorGeneration = useImageGeneration();
+  const floorplanGeneration = useImageGeneration();
+
+  // Editor state
+  const [imageForEditing, setImageForEditing] = useState<SourceImage | null>(
+    null
+  );
+
+  // Handle source image upload
+  const handleSourceImageUpload = (
+    tab: "exterior" | "interior" | "floorplan",
+    image: SourceImage
+  ) => {
+    updateTabState(tab, { sourceImage: image });
+  };
+
+  // Handle reference image upload
+  const handleReferenceImageUpload = (
+    tab: "exterior" | "interior" | "floorplan",
+    image: SourceImage
+  ) => {
+    updateTabState(tab, { referenceImage: image });
+  };
+
+  // Handle source image remove
+  const handleSourceImageRemove = (
+    tab: "exterior" | "interior" | "floorplan"
+  ) => {
+    updateTabState(tab, { sourceImage: null });
+  };
+
+  // Handle reference image remove
+  const handleReferenceImageRemove = (
+    tab: "exterior" | "interior" | "floorplan"
+  ) => {
+    updateTabState(tab, { referenceImage: null });
+  };
+
+  // Handle exterior generation
+  const handleExteriorGenerate = async () => {
+    const sourceImage = tabStates.exterior.sourceImage;
+    if (!sourceImage) return;
+
+    await exteriorGeneration.generateImages({
+      sourceImage,
+      referenceImage: tabStates.exterior.referenceImage,
+      prompt: exteriorPrompt.finalPrompt,
+      modelTier: modelSelection.modelTier,
+      imageQuality: modelSelection.imageQuality,
+      numberOfImages: 4,
+      onComplete: (images) => {
+        // Save to history
+        if (images.length > 0) {
+          history.addToHistory("exterior", {
+            id: Date.now().toString(),
+            sourceImage,
+            referenceImage: tabStates.exterior.referenceImage,
+            generatedImages: images,
+            prompt: exteriorPrompt.finalPrompt,
+            timestamp: Date.now(),
+            modelTier: modelSelection.modelTier,
+            imageQuality: modelSelection.imageQuality,
+          });
+        }
+
+        // Update tab state
+        updateTabState("exterior", {
+          generatedImages: images.map((img) => img.dataUrl),
+        });
+      },
+    });
+  };
+
+  // Handle interior generation
+  const handleInteriorGenerate = async () => {
+    const sourceImage = tabStates.interior.sourceImage;
+    if (!sourceImage) return;
+
+    await interiorGeneration.generateImages({
+      sourceImage,
+      referenceImage: tabStates.interior.referenceImage,
+      prompt: interiorPrompt.finalPrompt,
+      modelTier: modelSelection.modelTier,
+      imageQuality: modelSelection.imageQuality,
+      numberOfImages: 4,
+      onComplete: (images) => {
+        // Save to history
+        if (images.length > 0) {
+          history.addToHistory("interior", {
+            id: Date.now().toString(),
+            sourceImage,
+            referenceImage: tabStates.interior.referenceImage,
+            generatedImages: images,
+            prompt: interiorPrompt.finalPrompt,
+            timestamp: Date.now(),
+            modelTier: modelSelection.modelTier,
+            imageQuality: modelSelection.imageQuality,
+          });
+        }
+
+        // Update tab state
+        updateTabState("interior", {
+          generatedImages: images.map((img) => img.dataUrl),
+        });
+      },
+    });
+  };
+
+  // Handle floorplan generation
+  const handleFloorplanGenerate = async () => {
+    const sourceImage = tabStates.floorplan.sourceImage;
+    if (!sourceImage) return;
+
+    await floorplanGeneration.generateImages({
+      sourceImage,
+      referenceImage: tabStates.floorplan.referenceImage,
+      prompt: floorplanPrompt.finalPrompt,
+      modelTier: modelSelection.modelTier,
+      imageQuality: modelSelection.imageQuality,
+      numberOfImages: 4,
+      onComplete: (images) => {
+        // Save to history
+        if (images.length > 0) {
+          history.addToHistory("floorplan", {
+            id: Date.now().toString(),
+            sourceImage,
+            referenceImage: tabStates.floorplan.referenceImage,
+            generatedImages: images,
+            prompt: floorplanPrompt.finalPrompt,
+            timestamp: Date.now(),
+            modelTier: modelSelection.modelTier,
+            imageQuality: modelSelection.imageQuality,
+          });
+        }
+
+        // Update tab state
+        updateTabState("floorplan", {
+          generatedImages: images.map((img) => img.dataUrl),
+        });
+      },
+    });
+  };
+
+  // Handle upscale confirmation
+  const handleUpscaleConfirm = async (targetQuality: "2K" | "4K") => {
+    const upscaledImage = await upscale.handleUpscale(
+      targetQuality,
+      modelSelection.modelTier
+    );
+
+    if (upscaledImage) {
+      // You can add upscaled image to history or show in a modal
+      console.log("Upscaled image:", upscaledImage);
+    }
+  };
+
+  // Handle edit request
+  const handleEditRequest = (imageUrl: string) => {
+    // Convert image URL to SourceImage format
+    const sourceImage: SourceImage = {
+      base64: imageUrl.split(",")[1] || "",
+      mimeType: "image/png",
+      dataUrl: imageUrl,
+      name: `edit_${Date.now()}.png`,
+    };
+    setImageForEditing(sourceImage);
+    setActiveTab("edit");
+  };
+
+  // Handle edit complete
+  const handleEditComplete = (details: {
+    sourceImage: SourceImage;
+    maskImage: SourceImage;
+    prompt: string;
+    resultImage: string;
+  }) => {
+    // Save to utilities history (since edit is part of utilities workflow)
+    history.addToHistory("utilities", {
+      id: Date.now().toString(),
+      sourceImage: details.sourceImage,
+      generatedImages: [
+        {
+          base64: details.resultImage.split(",")[1] || "",
+          mimeType: "image/png",
+          dataUrl: details.resultImage,
+          name: `edited_${Date.now()}.png`,
+        },
+      ],
+      prompt: details.prompt,
+      timestamp: Date.now(),
+      modelTier: modelSelection.modelTier,
+      imageQuality: modelSelection.imageQuality,
+    });
+
+    setImageForEditing(null);
+  };
+  return (
+    <div className="min-h-screen p-8 fade-in-up relative pb-24">
+      <header className="text-center mb-10 relative">
+        {/* Back Button */}
+        <button
+          onClick={onBackToHome}
+          className="absolute top-0 left-0 z-50 p-2 bg-[var(--bg-surface-1)] hover:bg-[var(--bg-surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-full transition-colors border border-[var(--border-1)] group"
+          title="Quay lại trang chủ"
+        >
+          <Icon
+            name="arrow-left"
+            className="w-6 h-6 group-hover:-translate-x-1 transition-transform"
+          />
+        </button>
+
+        <h1 className="text-3xl md:text-4xl font-bold tracking-wider text-[var(--text-primary)] uppercase font-montserrat">
+          <span className="text-[var(--text-accent)]">NBOX.AI</span> RENDERING
+        </h1>
+        <p className="text-sm text-[var(--text-secondary)] mt-3 tracking-widest">
+          Created by Trần Minh Nhật - NBOX.AI - SĐT 0979.038.564
+        </p>
+        <div className="flex items-center justify-center gap-4 mt-3">
+          <a
+            href="https://academy.nboxvietnam.vn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors p-1"
+            title="Website NBOX Academy"
+          >
+            <Icon name="globe" className="w-5 h-5" />
+          </a>
+          <a
+            href="https://www.facebook.com/tran.minh.nhat.406322"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors p-1"
+            title="Facebook"
+          >
+            <Icon name="facebook" className="w-5 h-5" />
+          </a>
+          <a
+            href="https://www.tiktok.com/@nbox.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-accent)] transition-colors p-1"
+            title="TikTok"
+          >
+            <Icon name="tiktok" className="w-5 h-5" />
+          </a>
+        </div>
+
+        {/* Theme Selector */}
+        <div className="absolute top-0 right-0 z-50">
+          <select
+            value={theme}
+            onChange={(e) =>
+              setTheme(
+                e.target.value as
+                  | "dark"
+                  | "light"
+                  | "orange"
+                  | "green"
+                  | "architect"
+                  | "xmas"
+              )
+            }
+            className="px-3 py-1.5 text-xs bg-[var(--bg-surface-1)] border border-[var(--border-1)] rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-surface-2)] transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--border-accent)]"
+          >
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="orange">Orange</option>
+            <option value="green">Green</option>
+            <option value="architect">Architect</option>
+            <option value="xmas">Xmas</option>
+          </select>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-center border-b border-[var(--border-2)] mb-8 overflow-x-auto">
+          <TabButton
+            label="Render Ngoại Thất"
+            icon="photo"
+            isActive={activeTab === "exterior"}
+            onClick={() => setActiveTab("exterior")}
+          />
+          <TabButton
+            label="Render Nội Thất"
+            icon="home"
+            isActive={activeTab === "interior"}
+            onClick={() => setActiveTab("interior")}
+          />
+          <TabButton
+            label="Floorplan to 3D"
+            icon="cube"
+            isActive={activeTab === "floorplan"}
+            onClick={() => setActiveTab("floorplan")}
+          />
+          <TabButton
+            label="Tham Quan Ảo"
+            icon="cursor-arrow-rays"
+            isActive={activeTab === "virtual_tour"}
+            onClick={() => setActiveTab("virtual_tour")}
+          />
+          <TabButton
+            label="Chỉnh Sửa Ảnh"
+            icon="brush"
+            isActive={activeTab === "edit"}
+            onClick={() => setActiveTab("edit")}
+          />
+          <TabButton
+            label="Upscale"
+            icon="arrow-up-circle"
+            isActive={activeTab === "upscale"}
+            onClick={() => setActiveTab("upscale")}
+          />
+          <TabButton
+            label="Tiện Ích Khác"
+            icon="bookmark"
+            isActive={activeTab === "utilities"}
+            onClick={() => setActiveTab("utilities")}
+          />
+        </div>
+
+        <main>
+          {activeTab === "exterior" && (
+            <RenderTab
+              type="exterior"
+              sourceImage={tabStates.exterior.sourceImage}
+              referenceImage={tabStates.exterior.referenceImage}
+              generatedImages={tabStates.exterior.generatedImages}
+              selectedImageIndex={tabStates.exterior.selectedImageIndex}
+              onSourceImageUpload={(img) =>
+                handleSourceImageUpload("exterior", img)
+              }
+              onReferenceImageUpload={(img) =>
+                handleReferenceImageUpload("exterior", img)
+              }
+              onSourceImageRemove={() => handleSourceImageRemove("exterior")}
+              onReferenceImageRemove={() =>
+                handleReferenceImageRemove("exterior")
+              }
+              onGenerate={handleExteriorGenerate}
+              isGenerating={exteriorGeneration.isGenerating}
+            />
+          )}
+
+          {activeTab === "interior" && (
+            <RenderTab
+              type="interior"
+              sourceImage={tabStates.interior.sourceImage}
+              referenceImage={tabStates.interior.referenceImage}
+              generatedImages={tabStates.interior.generatedImages}
+              selectedImageIndex={tabStates.interior.selectedImageIndex}
+              onSourceImageUpload={(img) =>
+                handleSourceImageUpload("interior", img)
+              }
+              onReferenceImageUpload={(img) =>
+                handleReferenceImageUpload("interior", img)
+              }
+              onSourceImageRemove={() => handleSourceImageRemove("interior")}
+              onReferenceImageRemove={() =>
+                handleReferenceImageRemove("interior")
+              }
+              onGenerate={handleInteriorGenerate}
+              isGenerating={interiorGeneration.isGenerating}
+            />
+          )}
+
+          {activeTab === "floorplan" && (
+            <RenderTab
+              type="floorplan"
+              sourceImage={tabStates.floorplan.sourceImage}
+              referenceImage={tabStates.floorplan.referenceImage}
+              generatedImages={tabStates.floorplan.generatedImages}
+              selectedImageIndex={tabStates.floorplan.selectedImageIndex}
+              onSourceImageUpload={(img) =>
+                handleSourceImageUpload("floorplan", img)
+              }
+              onReferenceImageUpload={(img) =>
+                handleReferenceImageUpload("floorplan", img)
+              }
+              onSourceImageRemove={() => handleSourceImageRemove("floorplan")}
+              onReferenceImageRemove={() =>
+                handleReferenceImageRemove("floorplan")
+              }
+              onGenerate={handleFloorplanGenerate}
+              isGenerating={floorplanGeneration.isGenerating}
+            />
+          )}
+
+          {activeTab === "virtual_tour" && (
+            <VirtualTourTab
+              setActiveTab={setActiveTab}
+              setImageForEditing={setImageForEditing}
+              onCreateVideoRequest={() => {
+                console.log("Virtual tour video request");
+              }}
+            />
+          )}
+
+          {activeTab === "edit" && (
+            <ImageEditor
+              initialImage={imageForEditing}
+              onClearInitialImage={() => setImageForEditing(null)}
+              onEditComplete={handleEditComplete}
+              historyItemToRestore={null}
+              onHistoryRestored={() => {}}
+              onCreateVideoRequest={() => {
+                console.log("Edit video request");
+              }}
+            />
+          )}
+
+          {activeTab === "upscale" && <UpscaleTab />}
+
+          {activeTab === "utilities" && (
+            <UtilitiesTab
+              onEditRequest={handleEditRequest}
+              onStartNewRenderFlow={() => {
+                setActiveTab("exterior");
+              }}
+              promptFinderImage={null}
+              setPromptFinderImage={() => {}}
+              promptFinderPrompts={null}
+              setPromptFinderPrompts={() => {}}
+              finishMyBuildImage={null}
+              setFinishMyBuildImage={() => {}}
+              finishMyBuildPrompts={null}
+              setFinishMyBuildPrompts={() => {}}
+              finishInteriorImage={null}
+              setFinishInteriorImage={() => {}}
+              finishInteriorPrompts={null}
+              setFinishInteriorPrompts={() => {}}
+              history={history.exteriorHistory
+                .concat(history.interiorHistory)
+                .concat(history.floorplanHistory)
+                .concat(history.utilitiesHistory)}
+              onClearHistory={() => {
+                history.clearHistory("exterior");
+                history.clearHistory("interior");
+                history.clearHistory("floorplan");
+                history.clearHistory("edit");
+                history.clearHistory("utilities");
+              }}
+              onGenerationComplete={() => {}}
+              initialUtility={null}
+              setInitialUtility={() => {}}
+              videoTabSourceImage={null}
+              setVideoTabSourceImage={() => {}}
+            />
+          )}
+        </main>
+
+        {/* Upscale Modal */}
+        {upscale.isUpscaleModalOpen && upscale.imageToUpscale && (
+          <UpscaleModal
+            image={upscale.imageToUpscale}
+            onClose={upscale.closeUpscaleModal}
+            onUpscale={handleUpscaleConfirm}
+            isLoading={upscale.upscaleLoading}
+            progress={upscale.upscaleProgress}
+          />
+        )}
+      </div>
+    </div>
+  );
+}

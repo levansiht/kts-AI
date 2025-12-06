@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KTS - AI Render & Image Processing Platform
 
-## Getting Started
+Modern Next.js 15 application for AI-powered architectural rendering, image processing, and virtual tours.
 
-First, run the development server:
+## 🚀 Features
+
+- **AI Rendering**: Exterior & Interior rendering with Gemini AI
+- **Image Upscaling**: High-quality image upscaling
+- **Virtual Tours**: 360° virtual tour generation
+- **Image Editing**: Built-in image editor with filters
+- **Color Adjustment**: Advanced color grading tools
+- **History Management**: Track and restore previous renders
+
+## 📁 Project Structure
+
+```
+kts/
+├── app/                    # Next.js App Router
+│   ├── page.tsx           # Main entry point (40 lines)
+│   └── layout.tsx         # Root layout
+│
+├── components/            # Feature-based organization
+│   ├── landing/          # Landing page
+│   ├── main-app/         # Main app shell
+│   ├── render/           # Image upload & rendering
+│   ├── editor/           # Image editor components
+│   ├── modals/           # Modal dialogs
+│   ├── history/          # History panels
+│   ├── tabs/             # Tab components
+│   ├── ui/               # Shared UI components
+│   └── icons/            # Icon system
+│
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utility functions
+├── services/              # API services
+├── types/                 # TypeScript types
+└── constants/             # App constants
+```
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16.0.7 (App Router)
+- **Runtime**: React 19.2.0
+- **Language**: TypeScript 5.x
+- **Styling**: Tailwind CSS 4.x
+- **Build Tool**: Turbopack
+- **AI Service**: Google Gemini API
+
+## 📦 Getting Started
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+### Production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎨 Theme System
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Supports multiple themes:
+
+- Dark
+- Light
+- Orange
+- Green
+- Architect
+- Xmas
+
+## 📚 Documentation
+
+- [REFACTOR_SUMMARY.md](./REFACTOR_SUMMARY.md) - Complete refactoring documentation
+
+## 🔑 Environment Variables
+
+Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_GEMINI_API_KEY=your_api_key_here
+```
+
+## 🏗️ Architecture Highlights
+
+- **Component-based**: Modular, reusable components
+- **Type-safe**: Full TypeScript coverage
+- **Performance**: Optimized with Turbopack & code splitting
+- **Scalable**: Feature-based folder structure
+- **Modern**: Latest React patterns & hooks
+
+## 📝 Key Improvements (from v1)
+
+- ✅ Reduced page.tsx from **3093 → 40 lines** (98.7% reduction)
+- ✅ Organized components into **8 feature folders**
+- ✅ Implemented **barrel exports** for clean imports
+- ✅ Fixed **302 TypeScript errors**
+- ✅ Applied **Next.js 15 best practices**
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow the existing code structure and conventions.
+
+## 📄 License
+
+MIT
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-repo)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Check out [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
